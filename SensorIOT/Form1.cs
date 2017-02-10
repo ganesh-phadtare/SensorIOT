@@ -55,7 +55,7 @@ namespace SensorIOT
             Stopwatch innerWatch = new Stopwatch();
             innerWatch.Start();
 
-            SqlConnection con = new SqlConnection("Data Source=.;Initial Catalog=BulkDB;User Id=sa;Password=mail_123");
+            SqlConnection con = new SqlConnection("Data Source=192.168.35.116;Initial Catalog=BulkDB;User Id=sa;Password=mail_123");
 
             try
             {
