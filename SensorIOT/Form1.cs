@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.Data.SqlClient;
 using SensorIOT.Helpers;
 using System.Diagnostics;
+using SensorIOT.Communication;
 
 namespace SensorIOT
 {
@@ -20,76 +21,111 @@ namespace SensorIOT
             InitializeComponent();
         }
 
+        private void OnFrameChanged(object o, EventArgs e)
+        {
+            //Force a call to the Paint event handler.
+            this.Invalidate();
+        }
+
+        SensorApiProxy proxy = new SensorApiProxy();
+
+        Bitmap animatedImage = new Bitmap(@"D:/load1.gif");
+
         private void btnStart_Click(object sender, EventArgs e)
         {
+            //Begin the animation.
+            ImageAnimator.Animate(animatedImage, OnFrameChanged);
+
+            //Get the next frame ready for rendering.
+            ImageAnimator.UpdateFrames();
+
+            //Draw the next frame in the animation.
+            this.CreateGraphics().DrawImage(this.animatedImage, new Point(0, 0));
+
             int noOfRecords = 0;
+
             if (!string.IsNullOrEmpty(txtNoOfRecord.Text) && txtNoOfRecord.Text != "0")
             {
                 int.TryParse(txtNoOfRecord.Text, out noOfRecords);
             }
+            IntitalProcess(noOfRecords);
+        }
+
+
+        private void btl_TimeWiseStart_Click(object sender, EventArgs e)
+        {
+            int noOfRecords = 0;
+
+            if (!string.IsNullOrEmpty(txtTimeWise.Text) && txtTimeWise.Text != "0")
+            {
+                int.TryParse(txtTimeWise.Text, out noOfRecords);
+            }
+            IntitalTimeWiseProcess(noOfRecords);
+        }
+
+        private async void IntitalProcess(int noOfRecords)
+        {
+            Stopwatch watch = new Stopwatch();
+
+
             if (noOfRecords > 0)
             {
-
-                for (int i = 0; i <= noOfRecords; i++)
+                for (int i = 0; i <= noOfRecords - 1; i++)
                 {
-                    InsertData();
+                    await InsertData(watch);
                 }
             }
+
+            double timeTaken = watch.ElapsedMilliseconds;
+
+            label3.Text = timeTaken.ToString();
+            label7.Text = Convert.ToString(Math.Round(timeTaken / 600));
+            label10.Text = Convert.ToString(Math.Round(timeTaken / 60000));
         }
 
-        public async void InsertData()
+        private long CovertToMillis(int noOfMinutes)
         {
+            return noOfMinutes * 60000;
+        }
+
+        private async void IntitalTimeWiseProcess(int noOfMinutes)
+        {
+            Stopwatch watch = new Stopwatch();
+
+            Stopwatch loopWatch = new Stopwatch();
+
+            loopWatch.Start();
+            int noOfRecords = 0;
+            while (loopWatch.ElapsedMilliseconds <= CovertToMillis(noOfMinutes))
+            {
+                await InsertData(watch);
+                noOfRecords += 1;
+            }
+            loopWatch.Stop();
+
+            watch.Stop();
+
+            label4.Text = noOfRecords.ToString();
+        }
+
+        public async Task InsertData(Stopwatch watch)
+        {
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+
             string firstName = MockData.Person.FirstName();
             string surname = MockData.Person.Surname();
-            string fullName = string.Concat(firstName, " ", surname);
-            int age = MockData.RandomNumber.Next(99);
-            string city = MockData.Address.City();
-            string state = MockData.Address.State();
-            int phoneNo = MockData.RandomNumber.Next(100000000, 999999999);
 
-            await ExecuteData(firstName, surname, fullName, age, city, state, phoneNo);
-        }
+            dict.Add("@firstName", firstName);
+            dict.Add("@surname", surname);
+            dict.Add("@fullName", string.Concat(firstName, " ", surname));
+            dict.Add("@age", MockData.RandomNumber.Next(99).ToString());
+            dict.Add("@city", MockData.Address.City());
+            dict.Add("@state", MockData.Address.State());
+            dict.Add("@phoneNo", MockData.RandomNumber.Next(100000000, 999999999).ToString());
 
-        public Task<int> ExecuteData(string firstName, string surname, string fullName, int age, string city, string state, int phoneNo)
-        {
-            Stopwatch innerWatch = new Stopwatch();
-            innerWatch.Start();
-
-            SqlConnection con = new SqlConnection("Data Source=192.168.35.116;Initial Catalog=BulkDB;User Id=sa;Password=mail_123");
-
-            try
-            {
-                if (con.State != ConnectionState.Open)
-                    con.Open();
-
-                string command = "insert into EmployeeMaster(FirstName, LastName,FullName, Age, City, State, PhoneNo) Values(@firstName,@surname,@fullName,@age,@city,@state,@phoneNo)";
-
-                SqlCommand sqlCommand = new SqlCommand(command, con);
-                sqlCommand.Parameters.Add(new SqlParameter("@firstName", firstName));
-                sqlCommand.Parameters.Add(new SqlParameter("@surname", surname));
-                sqlCommand.Parameters.Add(new SqlParameter("@fullName", fullName));
-                sqlCommand.Parameters.Add(new SqlParameter("@age", age));
-                sqlCommand.Parameters.Add(new SqlParameter("@city", city));
-                sqlCommand.Parameters.Add(new SqlParameter("@state", state));
-                sqlCommand.Parameters.Add(new SqlParameter("@phoneNo", phoneNo));
-
-                sqlCommand.ExecuteNonQuery();
-                innerWatch.Stop();
-                AppLogger.LogTimer(innerWatch);
-            }
-            catch (Exception ex)
-            {
-                innerWatch.Stop();
-                AppLogger.LogError(ex);
-                return new Task<int>(1);
-            }
-            finally
-            {
-                if (con.State != ConnectionState.Open)
-                    con.Close();
-                innerWatch.Stop();
-            }
-            return new Task<int>(0);
+            watch.Start();
+            await proxy.Fetch(1, dict);
+            watch.Stop();
         }
     }
 }
