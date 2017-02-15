@@ -44,6 +44,8 @@
             this.txtTimeWise = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.btl_TimeWiseStart = new System.Windows.Forms.Button();
+            this.rbInline = new System.Windows.Forms.RadioButton();
+            this.rbSp = new System.Windows.Forms.RadioButton();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -85,7 +87,7 @@
             this.groupBox1.Controls.Add(this.txtNoOfRecord);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.btnStart);
-            this.groupBox1.Location = new System.Drawing.Point(12, 12);
+            this.groupBox1.Location = new System.Drawing.Point(12, 46);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(234, 171);
             this.groupBox1.TabIndex = 3;
@@ -153,7 +155,7 @@
             this.groupBox2.Controls.Add(this.txtTimeWise);
             this.groupBox2.Controls.Add(this.label6);
             this.groupBox2.Controls.Add(this.btl_TimeWiseStart);
-            this.groupBox2.Location = new System.Drawing.Point(267, 12);
+            this.groupBox2.Location = new System.Drawing.Point(267, 46);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(246, 133);
             this.groupBox2.TabIndex = 4;
@@ -204,13 +206,39 @@
             this.btl_TimeWiseStart.UseVisualStyleBackColor = true;
             this.btl_TimeWiseStart.Click += new System.EventHandler(this.btl_TimeWiseStart_Click);
             // 
+            // rbInline
+            // 
+            this.rbInline.AutoSize = true;
+            this.rbInline.Checked = true;
+            this.rbInline.Location = new System.Drawing.Point(141, 12);
+            this.rbInline.Name = "rbInline";
+            this.rbInline.Size = new System.Drawing.Size(81, 17);
+            this.rbInline.TabIndex = 5;
+            this.rbInline.TabStop = true;
+            this.rbInline.Text = "Inline Query";
+            this.rbInline.UseVisualStyleBackColor = true;
+            // 
+            // rbSp
+            // 
+            this.rbSp.AutoSize = true;
+            this.rbSp.Location = new System.Drawing.Point(251, 12);
+            this.rbSp.Name = "rbSp";
+            this.rbSp.Size = new System.Drawing.Size(102, 17);
+            this.rbSp.TabIndex = 6;
+            this.rbSp.Text = "Store Procedure";
+            this.rbSp.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(534, 196);
+            this.ClientSize = new System.Drawing.Size(534, 237);
+            this.Controls.Add(this.rbSp);
+            this.Controls.Add(this.rbInline);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "Form1";
             this.Text = "Form1";
             this.groupBox1.ResumeLayout(false);
@@ -218,6 +246,7 @@
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -239,6 +268,8 @@
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.RadioButton rbInline;
+        private System.Windows.Forms.RadioButton rbSp;
     }
 }
 

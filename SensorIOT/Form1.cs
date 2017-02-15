@@ -33,6 +33,7 @@ namespace SensorIOT
 
         private void btnStart_Click(object sender, EventArgs e)
         {
+            Reset();
             //Begin the animation.
             ImageAnimator.Animate(animatedImage, OnFrameChanged);
 
@@ -51,7 +52,6 @@ namespace SensorIOT
             IntitalProcess(noOfRecords);
         }
 
-
         private void btl_TimeWiseStart_Click(object sender, EventArgs e)
         {
             int noOfRecords = 0;
@@ -63,19 +63,39 @@ namespace SensorIOT
             IntitalTimeWiseProcess(noOfRecords);
         }
 
-        private async void IntitalProcess(int noOfRecords)
+        void Reset()
+        {
+            label3.Text = string.Empty;
+            label7.Text = string.Empty;
+            label10.Text = string.Empty;
+        }
+
+        private void IntitalProcess(int noOfRecords)
         {
             Stopwatch watch = new Stopwatch();
-
-
+            watch.Start();
             if (noOfRecords > 0)
             {
+                var tasks = new List<Task>();
                 for (int i = 0; i <= noOfRecords - 1; i++)
                 {
-                    await InsertData(watch);
+                    tasks.Add(
+                       Task.Run(() =>
+                         {
+                             InsertData();
+                         })
+                         );
                 }
+
+                Task.WaitAll(tasks.ToArray());
             }
 
+            watch.Stop();
+            SetTimer(watch);
+        }
+
+        public void SetTimer(Stopwatch watch)
+        {
             double timeTaken = watch.ElapsedMilliseconds;
 
             label3.Text = timeTaken.ToString();
@@ -98,7 +118,7 @@ namespace SensorIOT
             int noOfRecords = 0;
             while (loopWatch.ElapsedMilliseconds <= CovertToMillis(noOfMinutes))
             {
-                await InsertData(watch);
+                InsertData();
                 noOfRecords += 1;
             }
             loopWatch.Stop();
@@ -108,24 +128,42 @@ namespace SensorIOT
             label4.Text = noOfRecords.ToString();
         }
 
-        public async Task InsertData(Stopwatch watch)
+        public void InsertData()
         {
-            Dictionary<string, string> dict = new Dictionary<string, string>();
+            try
+            {
+                Dictionary<string, string> dict = new Dictionary<string, string>();
 
-            string firstName = MockData.Person.FirstName();
-            string surname = MockData.Person.Surname();
+                string firstName = MockData.Person.FirstName();
+                string surname = MockData.Person.Surname();
 
-            dict.Add("@firstName", firstName);
-            dict.Add("@surname", surname);
-            dict.Add("@fullName", string.Concat(firstName, " ", surname));
-            dict.Add("@age", MockData.RandomNumber.Next(99).ToString());
-            dict.Add("@city", MockData.Address.City());
-            dict.Add("@state", MockData.Address.State());
-            dict.Add("@phoneNo", MockData.RandomNumber.Next(100000000, 999999999).ToString());
+                dict.Add("@firstName", firstName);
+                dict.Add("@surname", surname);
+                dict.Add("@fullName", string.Concat(firstName, " ", surname));
+                dict.Add("@age", MockData.RandomNumber.Next(99).ToString());
+                dict.Add("@city", MockData.Address.City());
+                dict.Add("@state", MockData.Address.State());
+                dict.Add("@phoneNo", MockData.RandomNumber.Next(100000000, 999999999).ToString());
 
-            watch.Start();
-            await proxy.Fetch(1, dict);
-            watch.Stop();
+                //watch.Start();
+                proxy.Fetch(GetCommandType(), dict);
+                //watch.Stop();
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(ex);
+                throw ex;
+            }
+        }
+
+        int GetCommandType()
+        {
+            if (rbInline.Checked == true)
+                return 1;
+            else if (rbSp.Checked == true)
+                return 2;
+
+            return 0;
         }
     }
 }

@@ -24,10 +24,10 @@ namespace SensorIOT.Communication
             }
         }
 
-        public async Task Fetch(int executionType, Dictionary<string, string> data)
+        public void Fetch(int executionType, Dictionary<string, string> data)
         {
             var json = ConvertToJsonString(data);
-            await ViewFor(executionType, json);
+            ViewFor(executionType, json);
         }
 
         private string ConvertToJsonString(object data)
@@ -49,13 +49,13 @@ namespace SensorIOT.Communication
 
         }
 
-        private async Task ViewFor(int executionType, string data)
+        private void ViewFor(int executionType, string data)
         {
             HttpContent contentPost = new StringContent(data, Encoding.UTF8, "application/json");
 
             try
             {
-                await __client.PostAsync(string.Format("view/test/{0}", executionType), contentPost);
+                __client.PostAsync(string.Format("view/test/{0}", executionType), contentPost);
 
             }
             catch (Exception ex)
