@@ -11,6 +11,7 @@ using System.Data.SqlClient;
 using SensorIOT.Helpers;
 using System.Diagnostics;
 using SensorIOT.Communication;
+using System.Threading;
 
 namespace SensorIOT
 {
@@ -49,7 +50,7 @@ namespace SensorIOT
             {
                 int.TryParse(txtNoOfRecord.Text, out noOfRecords);
             }
-            IntitalProcess(noOfRecords);
+            IntitateProcess(noOfRecords);
         }
 
         private void btl_TimeWiseStart_Click(object sender, EventArgs e)
@@ -60,7 +61,7 @@ namespace SensorIOT
             {
                 int.TryParse(txtTimeWise.Text, out noOfRecords);
             }
-            IntitalTimeWiseProcess(noOfRecords);
+            IntitateTimeWiseProcess(noOfRecords);
         }
 
         void Reset()
@@ -70,36 +71,63 @@ namespace SensorIOT
             label10.Text = string.Empty;
         }
 
-        private void IntitalProcess(int noOfRecords)
+        private void IntitateProcess(int noOfRecords)
         {
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            if (noOfRecords > 0)
+            try
             {
-                var tasks = new List<Task>();
-                for (int i = 0; i <= noOfRecords - 1; i++)
+                if (noOfRecords > 0)
                 {
-                    tasks.Add(
-                       Task.Run(() =>
-                         {
-                             InsertData();
-                         })
-                         );
+                    Stopwatch watch = new Stopwatch();
+                    watch.Start();
+
+                    var tasks = new List<Task>();
+                    for (int i = 0; i <= noOfRecords - 1; i++)
+                    {
+                        Task.Run(() =>
+                            {
+                                InsertData();
+                            });
+
+                        //Unused code  required for testing.
+                        //tasks.Add(
+                        //   Task.Run(() =>
+                        //     {
+                        //         InsertData();
+                        //     })
+                        //     );
+
+                        //if (i != 0 && ((i % 5000) == 0))
+                        //{
+                        //    //Task.WaitAll(tasks.ToArray());
+                        //    Thread.Sleep(2000);
+                        //    //tasks = new List<Task>();
+                        //}
+                    }
+
+                    //Task.WaitAll(tasks.ToArray());
+
+                    watch.Stop();
+                    SetTimer(watch);
                 }
 
-                Task.WaitAll(tasks.ToArray());
             }
-
-            watch.Stop();
-            SetTimer(watch);
+            catch (Exception ex)
+            {
+                AppLogger.LogError(ex);
+                throw ex;
+            }
         }
 
-        public void SetTimer(Stopwatch watch)
+        /// <summary>
+        /// Log timers time to label
+        /// </summary>
+        /// <param name="watch"></param>
+        private void SetTimer(Stopwatch watch)
         {
             double timeTaken = watch.ElapsedMilliseconds;
 
             label3.Text = timeTaken.ToString();
-            label7.Text = Convert.ToString(Math.Round(timeTaken / 600));
+            label7.Text = Convert.ToString(Math.Round(timeTaken / 1000));
             label10.Text = Convert.ToString(Math.Round(timeTaken / 60000));
         }
 
@@ -108,27 +136,42 @@ namespace SensorIOT
             return noOfMinutes * 60000;
         }
 
-        private async void IntitalTimeWiseProcess(int noOfMinutes)
+        private void IntitateTimeWiseProcess(int noOfMinutes)
         {
-            Stopwatch watch = new Stopwatch();
-
-            Stopwatch loopWatch = new Stopwatch();
-
-            loopWatch.Start();
-            int noOfRecords = 0;
-            while (loopWatch.ElapsedMilliseconds <= CovertToMillis(noOfMinutes))
+            try
             {
-                InsertData();
-                noOfRecords += 1;
+                Stopwatch watch = new Stopwatch();
+
+                Stopwatch loopWatch = new Stopwatch();
+
+                loopWatch.Start();
+
+                int noOfRecords = 0;
+
+                var tasks = new List<Task>();
+
+                while (loopWatch.ElapsedMilliseconds <= CovertToMillis(noOfMinutes))
+                {
+                    Task.Run(() =>
+                        {
+                            InsertData();
+                        });
+                    noOfRecords += 1;
+                }
+                loopWatch.Stop();
+
+                watch.Stop();
+
+                label4.Text = noOfRecords.ToString();
             }
-            loopWatch.Stop();
-
-            watch.Stop();
-
-            label4.Text = noOfRecords.ToString();
+            catch (Exception ex)
+            {
+                AppLogger.LogError(ex);
+                throw ex;
+            }
         }
 
-        public void InsertData()
+        private void InsertData()
         {
             try
             {
@@ -145,9 +188,7 @@ namespace SensorIOT
                 dict.Add("@state", MockData.Address.State());
                 dict.Add("@phoneNo", MockData.RandomNumber.Next(100000000, 999999999).ToString());
 
-                //watch.Start();
                 proxy.Fetch(GetCommandType(), dict);
-                //watch.Stop();
             }
             catch (Exception ex)
             {
@@ -156,7 +197,7 @@ namespace SensorIOT
             }
         }
 
-        int GetCommandType()
+        private int GetCommandType()
         {
             if (rbInline.Checked == true)
                 return 1;

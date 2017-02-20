@@ -16,6 +16,7 @@ namespace SensorIOT.Communication
             if (__client == null)
             {
                 __client = new HttpClient();
+                __client.Timeout = TimeSpan.FromMinutes(30);
                 __client.BaseAddress = new Uri("http://192.168.35.124/SensorWebAPI/");
                 //__client.BaseAddress = new Uri("http://192.168.35.139/Select.DMS/");
                 //__client.DefaultRequestHeaders.Accept.Clear();http://localhost:51072/
@@ -56,7 +57,6 @@ namespace SensorIOT.Communication
             try
             {
                 __client.PostAsync(string.Format("view/test/{0}", executionType), contentPost);
-
             }
             catch (Exception ex)
             {
